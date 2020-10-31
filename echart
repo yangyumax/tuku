@@ -1,0 +1,252 @@
+
+- 一、实现前置条件：
+1. 一台能上网的电脑；
+2. 已有自建（云、docker等均可）的Node-Red服务，及Granafa服务。（部署具体方法自行百度）
+3. Granafa需安装Echart插件，插件地址：https://github.com/xiejia1992/echartsmap-panel （直接git clone 到/var/lib/grafana/plugins/ 目录下，就能使用。支持prometheus和httpget获取数据，或者编辑假数据。）
+
+
+- 二、效果预览：
+1. ![HttpApi数据](upload://A3UV0CSAggqLPGuVrkORzTXjnFl.png "HttpApi数据")
+
+
+4. ![效果展示图](upload://4REkF1cWP7sptfu7dkfe37tImHl.png "效果展示图")
+
+  
+
+
+- 三、实现步骤：
+1. NodeRed配置；
+![NodeRed-1](upload://1BiJREidS8TgToQluObrwZD9ER0.png "NodeRed-1")
+![NodeRed-2](upload://vr2Q9VpECgChw5ludHkBDoneLBG.png "NodeRed-2")
+![NodeRed-3](upload://uDUPca2xpoirevwLHGkYOm0VBDQ.png "NodeRed-3")
+![NodeRed-4](upload://bH2USBMJqzh7li2QBqXEeOvYvFU.png "NodeRed-4")
+![NodeRed-5](upload://q6dBJd1AyKUBhUOdfnY1FxN6iv.png "NodeRed-5")
+
+
+
+
+        [
+            {
+                "id": "655733c1.822acc",
+                "type": "change",
+                "z": "2aa70934.8a16b6",
+                "name": "",
+                "rules": [
+                    {
+                        "t": "set",
+                        "p": "payload.data.result[0].value[1]",
+                        "pt": "msg",
+                        "to": "50",
+                        "tot": "num"
+                    },
+                    {
+                        "t": "set",
+                        "p": "headers",
+                        "pt": "msg",
+                        "to": "{}",
+                        "tot": "json"
+                    },
+                    {
+                        "t": "set",
+                        "p": "headers.content.type",
+                        "pt": "msg",
+                        "to": "application/json",
+                        "tot": "str"
+                    }
+                ],
+                "action": "",
+                "property": "",
+                "from": "",
+                "to": "",
+                "reg": false,
+                "x": 160,
+                "y": 240,
+                "wires": [
+                    [
+                        "bd25bf97.249c"
+                    ]
+                ]
+            }
+        ]
+    
+
+
+2. Granafa配置；
+![Granafa-1](upload://qLnFnUMNqu2CeAskhbwsNc8IHRj.png "Granafa-1")
+
+
+
+        {
+          "annotations": {
+            "list": [
+              {
+                "builtIn": 1,
+                "datasource": "-- Grafana --",
+                "enable": true,
+                "hide": true,
+                "iconColor": "rgba(0, 211, 255, 1)",
+                "name": "Annotations & Alerts",
+                "type": "dashboard"
+              }
+            ]
+          },
+          "editable": true,
+          "gnetId": null,
+          "graphTooltip": 0,
+          "id": 27,
+          "links": [],
+          "panels": [
+            {
+              "EchartsOption": "option = {\n        tooltip : {  \n            trigger: 'item'  \n        },  \n        \n        visualMap: {\n            show: true,\n            min: 0,\n            max: 200,\n            left: 'left',\n            top: 'bottom',\n            calculable: true,\n            seriesIndex: [1],\n            inRange: {\n                color: ['#A5CC82', '#00467F']\n            },\n            textStyle: {\n                color: '#fff'\n            }\n\n        },\n\n        geo: {\n            show: true,\n            map: 'china',\n            zoom: 1.2,\n            label: {\n                normal: {\n                    show: false\n                },\n                emphasis: {\n                    show: false\n                }\n                },\n            roam: true,\n            itemStyle: {\n                normal: {\n                    areaColor: '#fff',\n                    borderColor: '#3B5077' \n                },\n                emphasis: {\n                    areaColor: 'lightgreen'\n                }\n            }\n        },\n\n        series: [{\n                type: 'scatter',\n                coordinateSystem: 'geo',\n                symbolSize: function(val) {\n                    return 0.1;\n                },\n                itemStyle: {\n                    normal: {\n                        color: '#05C3F9'\n                    }\n                }\n            },\n            {\n                name: '数据',\n                type: 'map',\n                map: 'china',\n                geoIndex: 0,\n                aspectScale: 0.75, \n                showLegendSymbol: false, \n                label: {\n                    normal: {\n                        show: false\n                    },\n                    emphasis: {\n                        show: false,\n                        textStyle: {\n                            color: 'red'\n                        }\n                    }\n                },\n                roam: true,\n                itemStyle: {\n                    normal: {\n                        areaColor: '#fff',\n                        borderColor: '#3B5077',\n                    },\n                    emphasis: {\n                        areaColor: '#2B91B7'\n                    }\n                },\n                animation: false,\n                data: data\n            }\n        ]\n    };",
+              "IS_MAP": true,
+              "USE_FAKE_DATA": false,
+              "USE_URL": true,
+              "datasource": null,
+              "fakeData": "",
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {}
+                },
+                "overrides": []
+              },
+              "gridPos": {
+                "h": 11,
+                "w": 8,
+                "x": 0,
+                "y": 0
+              },
+              "id": 2,
+              "map": "中国",
+              "pluginVersion": "7.1.1",
+              "request": "GET",
+              "targets": [
+                {
+                  "format": "time_series",
+                  "group": [],
+                  "metricColumn": "none",
+                  "rawQuery": false,
+                  "rawSql": "SELECT\n  Date AS \"time\",\n  id\nFROM RFID\nWHERE\n  $__timeFilter(Date)\nORDER BY Date",
+                  "refId": "A",
+                  "select": [
+                    [
+                      {
+                        "params": [
+                          "id"
+                        ],
+                        "type": "column"
+                      }
+                    ]
+                  ],
+                  "table": "RFID",
+                  "timeColumn": "Date",
+                  "timeColumnType": "timestamp",
+                  "where": [
+                    {
+                      "name": "$__timeFilter",
+                      "params": [],
+                      "type": "macro"
+                    }
+                  ]
+                }
+              ],
+              "timeFrom": null,
+              "timeShift": null,
+              "title": "Map-prometheus",
+              "type": "echartsmap-panel",
+              "updateInterval": 5000,
+              "url": " "
+            },
+            {
+              "EchartsOption": "var mapName = 'china'\nvar data = [{\n        name: \"北京\",\n        value: 3\n    },\n    {\n        name: \"天津\",\n        value: 0\n    },\n    {\n        name: \"河北\",\n        value: 0\n    },\n    {\n        name: \"山西\",\n        value: 0\n    },\n    {\n        name: \"内蒙古\",\n        value: 0\n    },\n    {\n        name: \"辽宁\",\n        value: 1\n    },\n    {\n        name: \"吉林\",\n        value: 0\n    },\n    {\n        name: \"黑龙江\",\n        value: 0\n    },\n    {\n        name: \"上海\",\n        value: 0\n    },\n    {\n        name: \"江苏\",\n        value: 0\n    },\n    {\n        name: \"浙江\",\n        value: 2\n    },\n    {\n        name: \"安徽\",\n        value: 0\n    },\n    {\n        name: \"福建\",\n        value: 4\n    },\n    {\n        name: \"江西\",\n        value: 0\n    },\n    {\n        name: \"山东\",\n        value: 0\n    },\n    {\n        name: \"河南\",\n        value: 0\n    },\n    {\n        name: \"湖北\",\n        value: 1\n    },\n    {\n        name: \"湖南\",\n        value: 0\n    },\n    {\n        name: \"重庆\",\n        value: 0\n    },\n    {\n        name: \"四川\",\n        value: 0\n    },\n    {\n        name: \"贵州\",\n        value: 0\n    },\n    {\n        name: \"云南\",\n        value: 0\n    },\n    {\n        name: \"西藏\",\n        value: 0\n    },\n    {\n        name: \"陕西\",\n        value: 0\n    },\n    {\n        name: \"甘肃\",\n        value: 0\n    },\n    {\n        name: \"青海\",\n        value: 0\n    },\n    {\n        name: \"宁夏\",\n        value: 0\n    },\n    {\n        name: \"新疆\",\n        value: 0\n    },\n    {\n        name: \"广东\",\n        value: 0\n    },\n    {\n        name: \"广西\",\n        value: 0\n    },\n    {\n        name: \"海南\",\n        value: 0\n    },\n];\n    \nvar geoCoordMap = {};\n\n/*获取地图数据*/\nmyChart.showLoading();\nvar mapFeatures = echarts.getMap(mapName).geoJson.features;\nmyChart.hideLoading();\nmapFeatures.forEach(function(v) {\n    // 地区名称\n    var name = v.properties.name;\n    // 地区经纬度\n    geoCoordMap[name] = v.properties.cp;\n\n});\n\nvar max = 480,\n    min = 9; // todo \nvar maxSize4Pin = 100,\n    minSize4Pin = 20;\n\nvar convertData = function(data) {\n    var res = [];\n    for (var i = 0; i < data.length; i++) {\n        var geoCoord = geoCoordMap[data[i].name];\n        if (geoCoord) {\n            res.push({\n                name: data[i].name,\n                value: geoCoord.concat(data[i].value),\n            });\n        }\n    }\n    return res;\n};\noption = {\n    tooltip: {\n          padding: 4,\n          enterable: true,\n          transitionDuration: 1,\n          textStyle: {\n            color: '#000',\n            decoration: 'none',\n          },\n          extraCssText:'box-shadow:2px 2px 8px rgba(204,204,204,0.8)',\n          backgroundColor:'#fff',\n          borderRadius: 6,\n          textStyle:{\n            color:'black',\n          },\n          padding:[5,10],\n          formatter: function(params) {\n            return params.name+':'+params.value[2]+'单'\n          }\n\n        },\n   \n    geo: {\n          show: true,\n          map: mapName,\n          label: {\n            normal: {\n              show: false\n            },\n            emphasis: {\n              show: false,\n            }\n          },\n          roam: false,\n          itemStyle: {\n            normal: {\n              borderWidth: 1,\n              areaColor: '#e3e3e3',\n              borderColor: '#e3e3e3',\n            },\n            emphasis: {\n              areaColor: '#e3e3e3',\n              borderColor: '#e3e3e3',\n            }\n          }\n        },\n    series: [{\n          name: '散点',\n          type: 'effectScatter',\n          coordinateSystem: 'geo',\n          data:convertData(data),\n          rippleEffect: {\n            period: 3.5, //波纹秒数\n            brushType: 'stroke', //stroke(涟漪)和fill(扩散)，两种效果\n            scale: 8//波纹范围\n          },\n          symbolSize: function(val) {\n            if(val[2] == 1 || val[2] == 2){\n              return 4\n            }else if(val[2] == 3){\n              return 4.5\n            }else if(val[2] == 4) {\n              return 5\n            }else if(val[2] == 5) {\n              return 5.5\n            }else if(val[2] == 6) {\n              return 6\n            }else if(val[2] == 7) {\n              return 6.5\n            }else if(val[2] > 7) {\n              return 7\n            }\n            // return 7\n          },\n          label: {\n            normal: {\n              show: false\n            },\n            emphasis: {\n              show: false\n            }\n          },\n          itemStyle: {\n            normal: {\n              color: function (e) {\n                if(e.value[2] == 0){\n                  return 'transparent'\n                }else if(e.value[2] == 1){\n                  return '#76A3FF'\n                }else if(e.value[2] == 2){\n                  return '#7CDE9A'\n                }else if(e.value[2] == 3){\n                  return '#FF7F33'\n                }else {\n                  return '#F53B3B'\n                }\n              },\n            }\n          }\n        },\n        ]\n};",
+              "IS_MAP": false,
+              "USE_FAKE_DATA": false,
+              "USE_URL": true,
+              "datasource": null,
+              "fakeData": "",
+              "fieldConfig": {
+                "defaults": {
+                  "custom": {}
+                },
+                "overrides": []
+              },
+              "gridPos": {
+                "h": 11,
+                "w": 13,
+                "x": 9,
+                "y": 0
+              },
+              "id": 4,
+              "map": "china",
+              "pluginVersion": "7.1.1",
+              "request": "",
+              "targets": [
+                {
+                  "format": "time_series",
+                  "group": [],
+                  "metricColumn": "none",
+                  "rawQuery": false,
+                  "rawSql": "SELECT\n  Date AS \"time\",\n  id\nFROM RFID\nWHERE\n  $__timeFilter(Date)\nORDER BY Date",
+                  "refId": "A",
+                  "select": [
+                    [
+                      {
+                        "params": [
+                          "id"
+                        ],
+                        "type": "column"
+                      }
+                    ]
+                  ],
+                  "table": "RFID",
+                  "timeColumn": "Date",
+                  "timeColumnType": "timestamp",
+                  "where": [
+                    {
+                      "name": "$__timeFilter",
+                      "params": [],
+                      "type": "macro"
+                    }
+                  ]
+                }
+              ],
+              "timeFrom": null,
+              "timeShift": null,
+              "title": "Panel Title",
+              "type": "echartsmap-panel",
+              "updateInterval": 60000,
+              "url": ""
+            }
+          ],
+          "schemaVersion": 26,
+          "style": "dark",
+          "tags": [],
+          "templating": {
+            "list": []
+          },
+          "time": {
+            "from": "now-6h",
+            "to": "now"
+          },
+          "timepicker": {
+            "refresh_intervals": [
+              "10s",
+              "30s",
+              "1m",
+              "5m",
+              "15m",
+              "30m",
+              "1h",
+              "2h",
+              "1d"
+            ]
+          },
+          "timezone": "",
+          "title": "REDMAP",
+          "uid": "gQ_pERpGk",
+          "version": 6
+        }
+    
+
+
+
+其它炫酷图形可在[ECharts Galler开源学习网](https://gallery.echartsjs.com/explore.html#sort=rank~timeframe=all~author=all "ECharts Gallery")找到后使用此方法接入数据源。
